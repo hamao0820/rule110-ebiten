@@ -5,6 +5,7 @@ import (
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/examples/resources/fonts"
+	"github.com/hajimehoshi/ebiten/v2/inpututil"
 	"github.com/hajimehoshi/ebiten/v2/text"
 	"github.com/hajimehoshi/ebiten/v2/vector"
 	"golang.org/x/image/font"
@@ -64,7 +65,7 @@ func (b *Button) Update() {
 
 	// onClick
 	b.clicked = false
-	if ebiten.IsMouseButtonPressed(ebiten.MouseButtonLeft) {
+	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
 		if b.isIn(x, y) {
 			b.clicked = true
 		}
