@@ -77,6 +77,27 @@ func newGame() *Game {
 	}
 }
 
+func (g *Game) initAutomaton() {
+	initial := make([]uint, g.col)
+	for i, cell := range g.cells[:g.col] {
+		if cell.value == Bit1 {
+			initial[i] = 1
+		}
+	}
+	g.automaton = automaton.NewAutomaton(initial)
+}
+
+func (g *Game) updateAutomaton() {
+	n := g.automaton.Update()
+	for i := 0; i < g.col; i++ {
+		if n*g.col+i >= len(g.cells) {
+			g.mode = ModeEnded
+			break
+		}
+		g.cells[n*g.col+i].value = Bit(g.automaton.State[i])
+	}
+}
+
 func (g *Game) Update() error {
 	for _, cell := range g.cells {
 		cell.Update()
@@ -126,7 +147,6 @@ func (g *Game) Update() error {
 			ebiten.SetCursorShape(ebiten.CursorShapeNotAllowed)
 		}
 	}
-
 	switch g.mode {
 	case ModeInitializing:
 		if g.startButton.clicked {
@@ -137,30 +157,11 @@ func (g *Game) Update() error {
 			for i := range g.cells {
 				g.cells[i].canClick = false
 			}
-			initial := make([]uint, g.col)
-			for i, cell := range g.cells[:g.col] {
-				if cell.value == Bit1 {
-					initial[i] = 1
-				}
-			}
-			g.automaton = automaton.NewAutomaton(initial)
+			g.initAutomaton()
 		}
 		if g.stepButton.clicked {
-			initial := make([]uint, g.col)
-			for i, cell := range g.cells[:g.col] {
-				if cell.value == Bit1 {
-					initial[i] = 1
-				}
-			}
-			g.automaton = automaton.NewAutomaton(initial)
-			n := g.automaton.Update()
-			for i := 0; i < g.col; i++ {
-				if n*g.col+i >= len(g.cells) {
-					g.mode = ModeEnded
-					break
-				}
-				g.cells[n*g.col+i].value = Bit(g.automaton.State[i])
-			}
+			g.initAutomaton()
+			g.updateAutomaton()
 			g.mode = ModePosed
 		}
 	case ModeRunning:
@@ -172,14 +173,7 @@ func (g *Game) Update() error {
 		}
 		g.ticks++
 		if g.ticks%30 == 0 {
-			n := g.automaton.Update()
-			for i := 0; i < g.col; i++ {
-				if n*g.col+i >= len(g.cells) {
-					g.mode = ModeEnded
-					break
-				}
-				g.cells[n*g.col+i].value = Bit(g.automaton.State[i])
-			}
+			g.updateAutomaton()
 		}
 	case ModePosed:
 		if g.startButton.clicked {
@@ -189,15 +183,7 @@ func (g *Game) Update() error {
 			g.stepButton.canClick = false
 		}
 		if g.stepButton.clicked {
-			n := g.automaton.Update()
-			for i := 0; i < g.col; i++ {
-				if n*g.col+i >= len(g.cells) {
-					g.mode = ModeEnded
-					break
-				}
-				g.cells[n*g.col+i].value = Bit(g.automaton.State[i])
-			}
-
+			g.updateAutomaton()
 		}
 	}
 
