@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"rule110/automaton"
 
 	"github.com/hajimehoshi/ebiten/v2"
 )
@@ -12,7 +13,6 @@ const (
 	ModeInitializing Mode = iota
 	ModeRunning
 	ModePosed
-	ModeStepping
 	ModeEnded
 )
 
@@ -28,6 +28,9 @@ type Game struct {
 	resetButton *Button
 	cells       []*Cell
 	mode        Mode
+	row, col    int
+	automaton   *automaton.Automaton
+	ticks       int
 }
 
 func newGame() *Game {
@@ -36,22 +39,29 @@ func newGame() *Game {
 	stopButton.canClick = false
 	stepButton := newButton(10, 150, 60, 30, "Step")
 	restButton := newButton(10, 220, 60, 30, "Reset")
+	var row, col int
 	cells := make([]*Cell, 0)
 	for i := 0; ; i++ {
 		y := 1 + 3*cellSize + i*cellSize
 		if y >= ScreenHeight {
 			break
 		}
+		row++
+		col_ := 0
 		for j := 0; ; j++ {
 			x := 1 + j*cellSize
 			if x >= ScreenWidth {
 				break
 			}
+			col_++
 			cell := newCell(y, x)
 			if i == 0 {
 				cell.canClick = true
 			}
 			cells = append(cells, cell)
+		}
+		if i == 0 {
+			col = col_
 		}
 	}
 
@@ -62,6 +72,8 @@ func newGame() *Game {
 		resetButton: restButton,
 		cells:       cells,
 		mode:        ModeInitializing,
+		row:         row,
+		col:         col,
 	}
 }
 
@@ -125,9 +137,31 @@ func (g *Game) Update() error {
 			for i := range g.cells {
 				g.cells[i].canClick = false
 			}
+			initial := make([]uint, g.col)
+			for i, cell := range g.cells[:g.col] {
+				if cell.value == Bit1 {
+					initial[i] = 1
+				}
+			}
+			g.automaton = automaton.NewAutomaton(initial)
 		}
 		if g.stepButton.clicked {
-			g.mode = ModeStepping
+			initial := make([]uint, g.col)
+			for i, cell := range g.cells[:g.col] {
+				if cell.value == Bit1 {
+					initial[i] = 1
+				}
+			}
+			g.automaton = automaton.NewAutomaton(initial)
+			n := g.automaton.Update()
+			for i := 0; i < g.col; i++ {
+				if n*g.col+i >= len(g.cells) {
+					g.mode = ModeEnded
+					break
+				}
+				g.cells[n*g.col+i].value = Bit(g.automaton.State[i])
+			}
+			g.mode = ModePosed
 		}
 	case ModeRunning:
 		if g.stopButton.clicked {
@@ -136,8 +170,16 @@ func (g *Game) Update() error {
 			g.stopButton.canClick = false
 			g.stepButton.canClick = true
 		}
-		if g.stepButton.clicked {
-			g.mode = ModeStepping
+		g.ticks++
+		if g.ticks%30 == 0 {
+			n := g.automaton.Update()
+			for i := 0; i < g.col; i++ {
+				if n*g.col+i >= len(g.cells) {
+					g.mode = ModeEnded
+					break
+				}
+				g.cells[n*g.col+i].value = Bit(g.automaton.State[i])
+			}
 		}
 	case ModePosed:
 		if g.startButton.clicked {
@@ -147,13 +189,15 @@ func (g *Game) Update() error {
 			g.stepButton.canClick = false
 		}
 		if g.stepButton.clicked {
-			g.mode = ModeStepping
-		}
-	case ModeStepping:
-		if g.stepButton.clicked {
-			g.mode = ModeStepping
-		} else {
-			g.mode = ModePosed
+			n := g.automaton.Update()
+			for i := 0; i < g.col; i++ {
+				if n*g.col+i >= len(g.cells) {
+					g.mode = ModeEnded
+					break
+				}
+				g.cells[n*g.col+i].value = Bit(g.automaton.State[i])
+			}
+
 		}
 	}
 
