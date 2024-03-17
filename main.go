@@ -6,6 +6,16 @@ import (
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
+type Mode int
+
+const (
+	ModeInitializing Mode = iota
+	ModeRunning
+	ModePosed
+	ModeStepping
+	ModeEnded
+)
+
 const (
 	ScreenWidth  = 1280
 	ScreenHeight = 720
@@ -17,6 +27,7 @@ type Game struct {
 	stepButton  *Button
 	resetButton *Button
 	cells       []*Cell
+	mode        Mode
 }
 
 func newGame() *Game {
@@ -50,6 +61,7 @@ func newGame() *Game {
 		stepButton:  stepButton,
 		resetButton: restButton,
 		cells:       cells,
+		mode:        ModeInitializing,
 	}
 }
 
@@ -57,6 +69,11 @@ func (g *Game) Update() error {
 	for _, cell := range g.cells {
 		cell.Update()
 	}
+
+	g.startButton.Update()
+	g.stopButton.Update()
+	g.stepButton.Update()
+	g.resetButton.Update()
 
 	// マウスカーソルの形状を設定
 	ebiten.SetCursorShape(ebiten.CursorShapeDefault)
@@ -98,10 +115,74 @@ func (g *Game) Update() error {
 		}
 	}
 
-	g.startButton.Update()
-	g.stopButton.Update()
-	g.stepButton.Update()
-	g.resetButton.Update()
+	switch g.mode {
+	case ModeInitializing:
+		if g.startButton.clicked {
+			g.mode = ModeRunning
+			g.startButton.canClick = false
+			g.stopButton.canClick = true
+			g.stepButton.canClick = false
+			for i := range g.cells {
+				g.cells[i].canClick = false
+			}
+		}
+		if g.stepButton.clicked {
+			g.mode = ModeStepping
+		}
+	case ModeRunning:
+		if g.stopButton.clicked {
+			g.mode = ModePosed
+			g.startButton.canClick = true
+			g.stopButton.canClick = false
+			g.stepButton.canClick = true
+		}
+		if g.stepButton.clicked {
+			g.mode = ModeStepping
+		}
+	case ModePosed:
+		if g.startButton.clicked {
+			g.mode = ModeRunning
+			g.startButton.canClick = false
+			g.stopButton.canClick = true
+			g.stepButton.canClick = false
+		}
+		if g.stepButton.clicked {
+			g.mode = ModeStepping
+		}
+	case ModeStepping:
+		if g.stepButton.clicked {
+			g.mode = ModeStepping
+		} else {
+			g.mode = ModePosed
+		}
+	}
+
+	if g.resetButton.clicked {
+		g.mode = ModeInitializing
+		g.startButton.canClick = true
+		g.stopButton.canClick = false
+		g.stepButton.canClick = true
+		cells := make([]*Cell, 0)
+		for i := 0; ; i++ {
+			y := 1 + 3*cellSize + i*cellSize
+			if y >= ScreenHeight {
+				break
+			}
+			for j := 0; ; j++ {
+				x := 1 + j*cellSize
+				if x >= ScreenWidth {
+					break
+				}
+				cell := newCell(y, x)
+				if i == 0 {
+					cell.canClick = true
+				}
+				cells = append(cells, cell)
+			}
+		}
+		g.cells = cells
+	}
+
 	return nil
 }
 
