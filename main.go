@@ -35,6 +35,13 @@ func (g *Game) Update() error {
 	for _, cell := range g.cells {
 		cell.Update()
 	}
+	ebiten.SetCursorShape(ebiten.CursorShapeNotAllowed)
+	for _, cell := range g.cells {
+		if cell.canClick && cell.hovered {
+			ebiten.SetCursorShape(ebiten.CursorShapeCrosshair)
+			break
+		}
+	}
 	return nil
 }
 
