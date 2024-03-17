@@ -5,7 +5,6 @@ import (
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/examples/resources/fonts"
-	"github.com/hajimehoshi/ebiten/v2/inpututil"
 	"github.com/hajimehoshi/ebiten/v2/text"
 	"github.com/hajimehoshi/ebiten/v2/vector"
 	"golang.org/x/image/font"
@@ -39,11 +38,10 @@ type Button struct {
 
 	hovered  bool
 	canClick bool
-
-	onCLick func() error
+	clicked  bool
 }
 
-func newButton(y, x, width, height int, message string, onClick func() error) *Button {
+func newButton(y, x, width, height int, message string) *Button {
 	return &Button{
 		x:        x,
 		y:        y,
@@ -51,7 +49,6 @@ func newButton(y, x, width, height int, message string, onClick func() error) *B
 		height:   height,
 		message:  message,
 		canClick: true,
-		onCLick:  onClick,
 	}
 }
 
@@ -66,8 +63,11 @@ func (b *Button) Update() {
 	}
 
 	// onClick
-	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) && b.isIn(x, y) && b.canClick {
-		b.onCLick()
+	b.clicked = false
+	if ebiten.IsMouseButtonPressed(ebiten.MouseButtonLeft) {
+		if b.isIn(x, y) {
+			b.clicked = true
+		}
 	}
 }
 

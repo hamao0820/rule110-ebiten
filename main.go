@@ -20,19 +20,11 @@ type Game struct {
 }
 
 func newGame() *Game {
-	startButton := newButton(10, 10, 60, 30, "Start", func() error {
-		return nil
-	})
-	stopButton := newButton(10, 80, 60, 30, "Stop", func() error {
-		return nil
-	})
+	startButton := newButton(10, 10, 60, 30, "Start")
+	stopButton := newButton(10, 80, 60, 30, "Stop")
 	stopButton.canClick = false
-	stepButton := newButton(10, 150, 60, 30, "Step", func() error {
-		return nil
-	})
-	restButton := newButton(10, 220, 60, 30, "Reset", func() error {
-		return nil
-	})
+	stepButton := newButton(10, 150, 60, 30, "Step")
+	restButton := newButton(10, 220, 60, 30, "Reset")
 	cells := make([]*Cell, 0)
 	for i := 0; ; i++ {
 		y := 1 + 3*cellSize + i*cellSize
