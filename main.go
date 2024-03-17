@@ -1,10 +1,13 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"rule110/automaton"
 
 	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
+	"golang.org/x/image/font"
 )
 
 type Mode int
@@ -42,7 +45,7 @@ func newGame() *Game {
 	var row, col int
 	cells := make([]*Cell, 0)
 	for i := 0; ; i++ {
-		y := 1 + 3*cellSize + i*cellSize
+		y := 51 + i*cellSize
 		if y >= ScreenHeight {
 			break
 		}
@@ -172,7 +175,7 @@ func (g *Game) Update() error {
 			g.stepButton.canClick = true
 		}
 		g.ticks++
-		if g.ticks%30 == 0 {
+		if g.ticks%15 == 0 {
 			g.updateAutomaton()
 		}
 	case ModePosed:
@@ -194,7 +197,7 @@ func (g *Game) Update() error {
 		g.stepButton.canClick = true
 		cells := make([]*Cell, 0)
 		for i := 0; ; i++ {
-			y := 1 + 3*cellSize + i*cellSize
+			y := 51 + i*cellSize
 			if y >= ScreenHeight {
 				break
 			}
@@ -224,6 +227,11 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	for _, cell := range g.cells {
 		cell.Draw(screen)
 	}
+	bds, _ := font.BoundString(mPlusNormalFont, "Rule 110")
+	messageWidth := (bds.Max.X - bds.Min.X).Ceil()
+	ebitenutil.DebugPrintAt(screen, "Rule 110", ScreenWidth/2-messageWidth/2, 15)
+	ebitenutil.DebugPrintAt(screen, fmt.Sprintf("FPS: %0.2f", ebiten.ActualFPS()), ScreenWidth-100, 8)
+	ebitenutil.DebugPrintAt(screen, fmt.Sprintf("TPS: %0.2f", ebiten.ActualTPS()), ScreenWidth-100, 24)
 }
 
 func (g *Game) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeight int) {

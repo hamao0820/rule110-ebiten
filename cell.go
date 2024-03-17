@@ -8,7 +8,7 @@ import (
 	"github.com/hajimehoshi/ebiten/v2/vector"
 )
 
-const cellSize = 20
+const cellSize = 10
 
 type Bit int
 
