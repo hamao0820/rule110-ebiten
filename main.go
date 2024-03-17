@@ -28,6 +28,9 @@ func newGame() *Game {
 }
 
 func (g *Game) Update() error {
+	for _, cell := range g.cells {
+		cell.Update()
+	}
 	return nil
 }
 
