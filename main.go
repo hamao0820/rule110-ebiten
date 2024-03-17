@@ -17,9 +17,13 @@ type Game struct {
 
 func newGame() *Game {
 	cells := make([]*Cell, 0)
-	for i := 1; i < ScreenWidth; i += cellSize {
-		for j := 1; j < ScreenHeight; j += cellSize {
-			cells = append(cells, newCell(i, j))
+	for y := 1; y < ScreenHeight; y += cellSize {
+		for x := 1; x < ScreenWidth; x += cellSize {
+			cell := newCell(y, x)
+			if y == 1 {
+				cell.canClick = true
+			}
+			cells = append(cells, cell)
 		}
 	}
 	return &Game{

@@ -24,15 +24,16 @@ var (
 )
 
 type Cell struct {
-	x       int
-	y       int
-	width   int
-	height  int
-	value   Bit
-	hovered bool
+	x        int
+	y        int
+	width    int
+	height   int
+	value    Bit
+	hovered  bool
+	canClick bool
 }
 
-func newCell(x, y int) *Cell {
+func newCell(y, x int) *Cell {
 	return &Cell{
 		x:      x,
 		y:      y,
@@ -71,12 +72,14 @@ func (c *Cell) Update() {
 	}
 
 	// onClick
-	if c.isIn(x, y) {
-		if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
-			if c.value == Bit0 {
-				c.value = Bit1
-			} else {
-				c.value = Bit0
+	if c.canClick {
+		if c.isIn(x, y) {
+			if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
+				if c.value == Bit0 {
+					c.value = Bit1
+				} else {
+					c.value = Bit0
+				}
 			}
 		}
 	}
