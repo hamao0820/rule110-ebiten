@@ -4,17 +4,32 @@ import (
 	"image/color"
 
 	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/hajimehoshi/ebiten/v2/inpututil"
 	"github.com/hajimehoshi/ebiten/v2/vector"
 )
 
 const cellSize = 20
 
+type Bit int
+
+const (
+	Bit0 Bit = iota
+	Bit1
+)
+
+var (
+	bit0Color    = color.RGBA{0, 0, 0, 0}
+	bit1Color    = color.RGBA{255, 255, 255, 255}
+	hoveredColor = color.RGBA{128, 128, 128, 255}
+)
+
 type Cell struct {
-	x      int
-	y      int
-	width  int
-	height int
-	bg     color.Color
+	x       int
+	y       int
+	width   int
+	height  int
+	value   Bit
+	hovered bool
 }
 
 func newCell(x, y int) *Cell {
@@ -23,7 +38,6 @@ func newCell(x, y int) *Cell {
 		y:      y,
 		width:  cellSize,
 		height: cellSize,
-		bg:     color.RGBA{0, 0, 0, 0},
 	}
 }
 
@@ -34,15 +48,37 @@ func (c *Cell) Draw(screen *ebiten.Image) {
 	vector.StrokeLine(screen, float32(c.x+c.width), float32(c.y), float32(c.x+c.width), float32(c.y+c.height), 1, color.White, false)
 	vector.StrokeLine(screen, float32(c.x), float32(c.y+c.height), float32(c.x+c.width), float32(c.y+c.height), 1, color.White, false)
 	// 背景を描画
-	vector.DrawFilledRect(screen, float32(c.x), float32(c.y), float32(c.width), float32(c.height), c.bg, false)
+	if c.value == Bit1 {
+		vector.DrawFilledRect(screen, float32(c.x), float32(c.y), float32(c.width), float32(c.height), bit1Color, false)
+	} else {
+		if c.hovered {
+			vector.DrawFilledRect(screen, float32(c.x), float32(c.y), float32(c.width), float32(c.height), hoveredColor, false)
+		} else {
+			vector.DrawFilledRect(screen, float32(c.x), float32(c.y), float32(c.width), float32(c.height), bit0Color, false)
+		}
+
+	}
 }
 
 func (c *Cell) Update() {
 	x, y := ebiten.CursorPosition()
+
+	// onHover
 	if c.isIn(x, y) {
-		c.bg = color.RGBA{128, 128, 128, 255}
+		c.hovered = true
 	} else {
-		c.bg = color.RGBA{0, 0, 0, 0}
+		c.hovered = false
+	}
+
+	// onClick
+	if c.isIn(x, y) {
+		if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
+			if c.value == Bit0 {
+				c.value = Bit1
+			} else {
+				c.value = Bit0
+			}
+		}
 	}
 }
 
